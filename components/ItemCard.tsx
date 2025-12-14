@@ -31,6 +31,13 @@ export default function ItemCard({ item, onEdit, onDelete }: ItemCardProps) {
     return `In ${days} days`;
   };
 
+  const formatDDMMYY = (d: Date) => {
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = String(d.getFullYear()).slice(-2);
+    return `${day}/${month}/${year}`;
+  };
+
   return (
     <div className="card bg-base-100 shadow-md hover:shadow-lg transition-shadow">
       <div className="card-body">
@@ -56,7 +63,7 @@ export default function ItemCard({ item, onEdit, onDelete }: ItemCardProps) {
         </div>
         
         <div className="mt-2 text-sm text-base-content/70">
-          <p>Expires: {expiry.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+          <p>Expires: {formatDDMMYY(expiry)}</p>
           <p className="font-medium">{getDaysText()}</p>
         </div>
         

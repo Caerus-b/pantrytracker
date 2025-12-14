@@ -18,11 +18,11 @@ export default function ItemForm({ item, onSubmit, onCancel }: ItemFormProps) {
   useEffect(() => {
     if (item) {
       setName(item.name);
-      setExpiryDate(item.expiryDate.split('T')[0]);
+      setExpiryDate(formatDDMMYY(new Date(item.expiryDate)));
       setLocation(item.location);
       setNotes(item.notes || "");
     } else {
-      setExpiryDate(new Date().toISOString().split('T')[0]);
+      setExpiryDate(formatDDMMYY(new Date()));
     }
   }, [item]);
 
@@ -30,13 +30,38 @@ export default function ItemForm({ item, onSubmit, onCancel }: ItemFormProps) {
     e.preventDefault();
     if (!name.trim() || !expiryDate) return;
 
+    const iso = parseDDMMYYToISO(expiryDate);
+    if (!iso) {
+      // invalid date format/values
+      return;
+    }
+
     onSubmit({
       name: name.trim(),
-      expiryDate: new Date(expiryDate).toISOString(),
+      expiryDate: iso,
       location,
       notes: notes.trim() || undefined,
     });
   };
+
+  function formatDDMMYY(d: Date) {
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = String(d.getFullYear()).slice(-2);
+    return `${day}/${month}/${year}`;
+  }
+
+  function parseDDMMYYToISO(s: string) {
+    const m = s.match(/^(\d{2})\/(\d{2})\/(\d{2})$/);
+    if (!m) return null;
+    const day = Number(m[1]);
+    const month = Number(m[2]);
+    const year = 2000 + Number(m[3]);
+    const d = new Date(year, month - 1, day);
+    if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
+    // return ISO at midnight UTC-equivalent using Date.UTC to avoid timezone shifts
+    return new Date(Date.UTC(year, month - 1, day)).toISOString();
+  }
 
   return (
     <div className="card bg-base-100 shadow-lg">
@@ -65,11 +90,16 @@ export default function ItemForm({ item, onSubmit, onCancel }: ItemFormProps) {
               <span className="label-text">Expiry Date</span>
             </label>
             <input
-              type="date"
+              type="text"
+              inputMode="numeric"
+              placeholder="dd/mm/yy"
+              maxLength={8}
               className="input input-bordered w-full"
               value={expiryDate}
               onChange={(e) => setExpiryDate(e.target.value)}
               required
+              pattern="[0-9]{2}/[0-9]{2}/[0-9]{2}"
+              title="Format: dd/mm/yy"
             />
           </div>
 
